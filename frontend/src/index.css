@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  /* Define AstroSoft Custom Colors here */
+  --color-astro-dark: #0a0e17;
+  --color-astro-card: #131b2c;
+  --color-astro-blue: #2563eb;
+  --color-astro-light-blue: #60a5fa;
+  --color-astro-text: #f8fafc;
+  --color-astro-text-muted: #94a3b8;
+}
+
+/* Apply global dark mode styles */
+body {
+  background-color: var(--color-astro-dark);
+  color: var(--color-astro-text);
+}
