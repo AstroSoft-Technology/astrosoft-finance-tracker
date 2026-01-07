@@ -20,7 +20,7 @@ SECRET_KEY = 'django-insecure-l7r7++7s9xhz&t*)lzcg*b0s=rjl=w0y6m63gz_6qg2a7c+x=4
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # We check for 'RAILWAY_ENVIRONMENT' to disable Debug in production
-DEBUG = 'RAILWAY_ENVIRONMENT' not in os.environ
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # Allow Railway/Vercel URLs
 ALLOWED_HOSTS = ['*']
@@ -155,3 +155,5 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+CSRF_TRUSTED_ORIGINS = ['https://web-production-6a19a.up.railway.app']
