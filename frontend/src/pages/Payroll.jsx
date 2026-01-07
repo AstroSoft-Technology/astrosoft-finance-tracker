@@ -7,12 +7,118 @@ import {
   UserPlus,
   Trash2,
   CheckCircle,
+  X,
 } from "lucide-react";
+
+// --- NEW COMPONENT: Payment History Modal ---
+const PaymentHistoryModal = ({ employee, onClose }) => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        // Fetches payments filtered by specific employee ID
+        // Note: 'payroll/' matches the endpoint used in fetchData()
+        const res = await api.get(`payroll/?employee=${employee.id}`);
+        setHistory(res.data);
+      } catch (error) {
+        console.error("Failed to fetch history", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [employee]);
+
+  const formatCurrency = (val) =>
+    new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" })
+      .format(val)
+      .replace("LKR", "Rs.");
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-astro-card w-full max-w-2xl rounded-2xl border border-gray-700 shadow-2xl flex flex-col max-h-[80vh]">
+        <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-astro-dark rounded-t-2xl">
+          <div>
+            <h2 className="text-xl font-bold text-white">Payment History</h2>
+            <p className="text-astro-text-muted text-sm mt-1">
+              For{" "}
+              <span className="text-astro-blue font-bold">{employee.name}</span>
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto flex-1">
+          {loading ? (
+            <div className="text-center py-8 text-astro-text-muted animate-pulse">
+              Loading records...
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 bg-gray-800/30 rounded-xl border border-dashed border-gray-700">
+              No payment records found for this employee.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-gray-700">
+              <table className="w-full text-left">
+                <thead className="bg-gray-800 text-gray-400 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold">Date</th>
+                    <th className="px-6 py-4 font-semibold">Title</th>
+                    <th className="px-6 py-4 font-semibold text-right">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700 bg-astro-card">
+                  {history.map((pay) => (
+                    <tr
+                      key={pay.id}
+                      className="hover:bg-gray-800/50 transition-colors"
+                    >
+                      <td className="px-6 py-4 text-gray-300 font-mono text-sm">
+                        {pay.payment_date}
+                      </td>
+                      <td className="px-6 py-4 text-white font-medium">
+                        {pay.title || "Salary Payment"}
+                      </td>
+                      <td className="px-6 py-4 text-right text-green-400 font-bold font-mono">
+                        {formatCurrency(pay.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-gray-700 bg-astro-dark rounded-b-2xl flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Payroll = () => {
   const [employees, setEmployees] = useState([]);
   const [payments, setPayments] = useState([]);
   const [activeTab, setActiveTab] = useState("team"); // 'team' or 'history'
+
+  // --- ADDED STATE: Track selected employee for modal ---
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   // Forms
   const [showAddEmp, setShowAddEmp] = useState(false);
@@ -25,7 +131,6 @@ const Payroll = () => {
 
   const [showPayModal, setShowPayModal] = useState(false);
 
-  // --- UPDATED STATE: Changed 'date' to 'payment_date' to match Backend ---
   const [payData, setPayData] = useState({
     employee: "",
     amount: "",
@@ -65,7 +170,6 @@ const Payroll = () => {
     try {
       await api.post("payroll/", payData);
       setShowPayModal(false);
-      // --- UPDATED RESET: Reset 'payment_date' correctly ---
       setPayData({
         employee: "",
         amount: "",
@@ -80,7 +184,8 @@ const Payroll = () => {
     }
   };
 
-  const handleDeleteEmployee = async (id) => {
+  const handleDeleteEmployee = async (id, e) => {
+    e.stopPropagation(); // Prevent opening the modal when clicking delete
     if (confirm("Delete this employee?")) {
       try {
         await api.delete(`employees/${id}/`);
@@ -154,30 +259,38 @@ const Payroll = () => {
           {employees.map((emp) => (
             <div
               key={emp.id}
-              className="bg-astro-card p-6 rounded-2xl border border-gray-800 shadow-lg relative group h-64 flex flex-col justify-between"
+              onClick={() => setSelectedEmployee(emp)} // --- ADDED: Make card clickable ---
+              className="bg-astro-card p-6 rounded-2xl border border-gray-800 shadow-lg relative group h-64 flex flex-col justify-between cursor-pointer hover:border-astro-blue hover:shadow-astro-blue/10 transition-all"
             >
               <div>
                 <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-astro-dark rounded-xl text-astro-blue border border-gray-800">
+                  <div className="p-3 bg-astro-dark rounded-xl text-astro-blue border border-gray-800 group-hover:bg-astro-blue group-hover:text-white transition-colors">
                     <Users size={24} />
                   </div>
                   <button
-                    onClick={() => handleDeleteEmployee(emp.id)}
-                    className="text-gray-600 hover:text-red-500 transition-colors"
+                    onClick={(e) => handleDeleteEmployee(emp.id, e)}
+                    className="text-gray-600 hover:text-red-500 transition-colors p-2 hover:bg-gray-800 rounded-lg"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
-                <h3 className="text-xl font-bold text-white">{emp.name}</h3>
+                <h3 className="text-xl font-bold text-white group-hover:text-astro-blue transition-colors">
+                  {emp.name}
+                </h3>
                 <p className="text-astro-text-muted text-sm">{emp.role}</p>
               </div>
 
-              <div className="pt-4 border-t border-gray-800">
-                <p className="text-xs text-astro-text-muted">Status</p>
-                <p className="text-green-400 font-medium text-sm flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>{" "}
-                  Active Team Member
-                </p>
+              <div className="pt-4 border-t border-gray-800 flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-astro-text-muted">Status</p>
+                  <p className="text-green-400 font-medium text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>{" "}
+                    Active
+                  </p>
+                </div>
+                <span className="text-xs text-astro-blue font-medium bg-astro-blue/10 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  View History →
+                </span>
               </div>
             </div>
           ))}
@@ -230,7 +343,7 @@ const Payroll = () => {
 
       {/* --- ADD EMPLOYEE MODAL --- */}
       {showAddEmp && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-full max-w-md rounded-2xl border border-gray-700 p-6">
             <h3 className="text-xl font-bold mb-4">Add Team Member</h3>
             <form onSubmit={handleAddEmployee} className="space-y-4">
@@ -286,9 +399,9 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* --- PROCESS PAY MODAL (UPDATED) --- */}
+      {/* --- PROCESS PAY MODAL --- */}
       {showPayModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-full max-w-md rounded-2xl border border-gray-700 p-6">
             <h3 className="text-xl font-bold mb-4">Process Salary</h3>
             <form onSubmit={handleProcessPay} className="space-y-4">
@@ -332,7 +445,6 @@ const Payroll = () => {
                     }
                   />
                 </div>
-                {/* --- UPDATED INPUT: DATE FIELD FIX --- */}
                 <div>
                   <label className="text-sm text-astro-text-muted">Date</label>
                   <input
@@ -381,6 +493,14 @@ const Payroll = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* --- ADDED: Render Payment History Modal --- */}
+      {selectedEmployee && (
+        <PaymentHistoryModal
+          employee={selectedEmployee}
+          onClose={() => setSelectedEmployee(null)}
+        />
       )}
     </div>
   );

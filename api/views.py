@@ -13,6 +13,7 @@ from .serializers import (
     LiabilitySerializer, EmployeeSerializer, SalaryPaymentSerializer
 )
 from .models import Income, Expense, Liability, Employee, SalaryPayment
+from django_filters.rest_framework import DjangoFilterBackend
 
 # --- CRUD ViewSets ---
 
@@ -76,10 +77,10 @@ class LiabilityViewSet(viewsets.ModelViewSet):
             liability.is_settled = True
         liability.save()
 
-        # --- UPDATED: Create Expense Record with 'Liability' Category ---
+        # Create Expense Record with 'Liability' Category
         Expense.objects.create(
             user=request.user,
-            category='Liability',  # <--- FIXED: Now maps correctly for charts
+            category='Liability',
             amount=amount,
             date=request.data.get('date', datetime.date.today()),
             description=f"Payment for {liability.title}"
@@ -180,10 +181,16 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 # --- Payroll Management ---
 
 class SalaryPaymentViewSet(viewsets.ModelViewSet):
+    queryset = SalaryPayment.objects.all()
     serializer_class = SalaryPaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # --- ADDED: Filter Configuration ---
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['employee']  # Allows ?employee=ID in URL
+
     def get_queryset(self):
+        # Base filter: only show payments related to the logged-in user
         return SalaryPayment.objects.filter(employee__user=self.request.user).order_by('-payment_date')
 
     def perform_create(self, serializer):
@@ -191,12 +198,10 @@ class SalaryPaymentViewSet(viewsets.ModelViewSet):
         salary_payment = serializer.save()
 
         # 2. AUTO-CREATE EXPENSE RECORD
-        # --- UPDATED: Create Expense Record with 'Salary' Category ---
         Expense.objects.create(
-            user=self.request.user,  # Fixed: using self.request.user
-            category='Salary',      # Fixed: Now maps correctly for charts
+            user=self.request.user,
+            category='Salary',
             amount=serializer.validated_data['amount'],
             date=serializer.validated_data['payment_date'],
-            # Fixed: Properly accessing the employee name from the saved instance
             description=f"Salary Payment: {salary_payment.employee.name} ({serializer.validated_data['title']})"
         )
