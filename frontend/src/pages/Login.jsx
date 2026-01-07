@@ -12,7 +12,10 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/token/", {
+      // Use the environment variable for the Login URL too!
+      const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
+      const response = await axios.post(`${API_URL}/api/token/`, {
         username,
         password,
       });

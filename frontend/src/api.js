@@ -1,7 +1,10 @@
 import axios from "axios";
 
+// Read the URL from the environment (Vercel), or default to localhost
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/",
+  baseURL: `${API_URL}/api/`, // Use the smart URL
 });
 
 // 1. Add Token to every request
