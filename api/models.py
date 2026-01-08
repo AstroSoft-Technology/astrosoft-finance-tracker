@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import datetime
 
 # Options for Expense Categories
 CATEGORY_CHOICES = [
@@ -18,7 +19,7 @@ CATEGORY_CHOICES = [
 
 class Income(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    source = models.CharField(max_length=255)  # e.g., "Salary", "Freelance"
+    source = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
     description = models.TextField(blank=True, null=True)
@@ -41,12 +42,8 @@ class Expense(models.Model):
 
 
 class Liability(models.Model):
-    """
-    Tracks debts/loans. 
-    When you pay off part of a liability, we will update 'paid_amount'.
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)  # e.g., "Car Loan", "Credit Card"
+    title = models.CharField(max_length=255)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     paid_amount = models.DecimalField(
         max_digits=12, decimal_places=2, default=0)
@@ -64,7 +61,7 @@ class Liability(models.Model):
 class Employee(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255)  # e.g., "Software Engineer"
+    role = models.CharField(max_length=255)
     base_salary = models.DecimalField(max_digits=12, decimal_places=2)
     email = models.EmailField(blank=True, null=True)
     joined_date = models.DateField(auto_now_add=True)
@@ -79,7 +76,39 @@ class SalaryPayment(models.Model):
     payment_date = models.DateField()
     title = models.CharField(max_length=255, default="Salary Payment")
 
-    # --- UPDATE THIS FUNCTION ---
     def __str__(self):
-        # <--- Change .month to .title
         return f"{self.employee.name} - {self.title}"
+
+
+class Customer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=200)
+    project_name = models.CharField(max_length=200)
+    domain_name = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    # Financials
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    advance_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0)
+    is_payment_confirmed = models.BooleanField(default=False)
+
+    # Dates
+    delivery_date = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.project_name}"
+
+
+# --- NEW: Partial Payment Model ---
+class CustomerPayment(models.Model):
+    customer = models.ForeignKey(
+        Customer, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField(default=datetime.date.today)
+    note = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.customer.name} - {self.amount}"

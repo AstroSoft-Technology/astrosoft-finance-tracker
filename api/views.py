@@ -10,9 +10,10 @@ from decimal import Decimal
 import datetime
 from .serializers import (
     UserSerializer, IncomeSerializer, ExpenseSerializer,
-    LiabilitySerializer, EmployeeSerializer, SalaryPaymentSerializer
+    LiabilitySerializer, EmployeeSerializer, SalaryPaymentSerializer,
+    CustomerSerializer, CustomerPaymentSerializer
 )
-from .models import Income, Expense, Liability, Employee, SalaryPayment
+from .models import Income, Expense, Liability, Employee, SalaryPayment, Customer, CustomerPayment
 from django_filters.rest_framework import DjangoFilterBackend
 
 # --- CRUD ViewSets ---
@@ -88,6 +89,40 @@ class LiabilityViewSet(viewsets.ModelViewSet):
 
         return Response({'status': 'payment recorded', 'new_balance': liability.remaining_amount})
 
+# --- NEW: Customer ViewSets ---
+
+
+class CustomerViewSet(viewsets.ModelViewSet):
+    serializer_class = CustomerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Customer.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class CustomerPaymentViewSet(viewsets.ModelViewSet):
+    serializer_class = CustomerPaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only show payments for customers belonging to this user
+        return CustomerPayment.objects.filter(customer__user=self.request.user).order_by('-date')
+
+    def perform_create(self, serializer):
+        payment = serializer.save()
+
+        # --- AUTO-MAGIC: Create an Income Record ---
+        Income.objects.create(
+            user=self.request.user,
+            source=f"Project: {payment.customer.project_name} ({payment.customer.name})",
+            amount=payment.amount,
+            date=payment.date,
+            description=f"Partial Payment. Note: {payment.note}"
+        )
+
 # --- Dashboard Logic ---
 
 
@@ -98,19 +133,14 @@ class DashboardStatsView(APIView):
         user = request.user
         today = datetime.date.today()
 
-        # 1. Totals
         total_income = Income.objects.filter(user=user).aggregate(Sum('amount'))[
             'amount__sum'] or Decimal(0)
         total_expense = Expense.objects.filter(user=user).aggregate(Sum('amount'))[
             'amount__sum'] or Decimal(0)
-
         liabilities = Liability.objects.filter(user=user)
-        # Manual sum for precision
         total_liabilities = sum([l.remaining_amount for l in liabilities])
-
         balance = total_income - total_expense
 
-        # 2. Recent Transactions
         recent_incomes = Income.objects.filter(user=user).values(
             'id', 'source', 'amount', 'date', 'created_at')
         recent_expenses = Expense.objects.filter(user=user).values(
@@ -127,34 +157,19 @@ class DashboardStatsView(APIView):
         transactions.sort(key=lambda x: x['date'], reverse=True)
         recent_transactions = transactions[:5]
 
-        # 3. Pie Chart Data
         category_stats = Expense.objects.filter(user=user).values(
             'category').annotate(total=Sum('amount')).order_by('-total')
 
-        # 4. Bar Chart Data (Last 6 Months)
         monthly_data = []
         for i in range(5, -1, -1):
             month_start = (today.replace(day=1) -
                            datetime.timedelta(days=i*30)).replace(day=1)
-
-            # Filter by Year and Month
-            inc = Income.objects.filter(
-                user=user,
-                date__year=month_start.year,
-                date__month=month_start.month
-            ).aggregate(Sum('amount'))['amount__sum'] or 0
-
-            exp = Expense.objects.filter(
-                user=user,
-                date__year=month_start.year,
-                date__month=month_start.month
-            ).aggregate(Sum('amount'))['amount__sum'] or 0
-
-            monthly_data.append({
-                "name": month_start.strftime("%b"),  # e.g. "Jan"
-                "income": inc,
-                "expense": exp
-            })
+            inc = Income.objects.filter(user=user, date__year=month_start.year, date__month=month_start.month).aggregate(
+                Sum('amount'))['amount__sum'] or 0
+            exp = Expense.objects.filter(user=user, date__year=month_start.year, date__month=month_start.month).aggregate(
+                Sum('amount'))['amount__sum'] or 0
+            monthly_data.append({"name": month_start.strftime(
+                "%b"), "income": inc, "expense": exp})
 
         return Response({
             "total_income": total_income,
@@ -178,26 +193,19 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-# --- Payroll Management ---
-
 class SalaryPaymentViewSet(viewsets.ModelViewSet):
     queryset = SalaryPayment.objects.all()
     serializer_class = SalaryPaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    # --- ADDED: Filter Configuration ---
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['employee']  # Allows ?employee=ID in URL
+    filterset_fields = ['employee']
 
     def get_queryset(self):
-        # Base filter: only show payments related to the logged-in user
         return SalaryPayment.objects.filter(employee__user=self.request.user).order_by('-payment_date')
 
     def perform_create(self, serializer):
-        # 1. Save the Salary Record
         salary_payment = serializer.save()
-
-        # 2. AUTO-CREATE EXPENSE RECORD
         Expense.objects.create(
             user=self.request.user,
             category='Salary',

@@ -6,6 +6,7 @@ import {
   Landmark,
   LogOut,
   Users,
+  Briefcase, // Imported for the Clients tab
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpg";
@@ -18,6 +19,7 @@ const Sidebar = () => {
     { name: "Income", icon: Wallet, path: "/income" },
     { name: "Expenses", icon: CreditCard, path: "/expenses" },
     { name: "Liabilities", icon: Landmark, path: "/liabilities" },
+    { name: "Clients", icon: Briefcase, path: "/customers" }, // New Page Link
     { name: "Payroll", icon: Users, path: "/payroll" },
   ];
 
@@ -34,7 +36,7 @@ const Sidebar = () => {
     <div className="h-screen w-64 bg-astro-card border-r border-gray-800 flex flex-col fixed left-0 top-0">
       {/* Logo Section */}
       <div className="p-8 flex flex-col items-center">
-        {/* If the image fails, this alt text will show. Ensure logo.jpg is in src/assets/ */}
+        {/* Ensure logo.jpg is in src/assets/ */}
         <img
           src={logo}
           alt="AstroSoft"
@@ -60,7 +62,6 @@ const Sidebar = () => {
               }`
             }
           >
-            {/* We access isActive here via the parent NavLink's className logic instead */}
             {({ isActive }) => (
               <>
                 <item.icon

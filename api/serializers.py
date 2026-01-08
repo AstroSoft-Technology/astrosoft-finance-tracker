@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Income, Expense, Liability, Employee, SalaryPayment
-
-# User Serializer (for registration/login)
+from .models import Income, Expense, Liability, Employee, SalaryPayment, Customer, CustomerPayment
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,7 +18,7 @@ class IncomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Income
         fields = "__all__"
-        read_only_fields = ["user"]  # User is auto-assigned
+        read_only_fields = ["user"]
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
@@ -31,7 +29,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 
 class LiabilitySerializer(serializers.ModelSerializer):
-    remaining_amount = serializers.ReadOnlyField()  # Calculated field
+    remaining_amount = serializers.ReadOnlyField()
 
     class Meta:
         model = Liability
@@ -53,3 +51,33 @@ class SalaryPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryPayment
         fields = "__all__"
+
+# --- NEW: Payment Serializer ---
+
+
+class CustomerPaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerPayment
+        fields = '__all__'
+
+# --- UPDATED: Customer Serializer ---
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    # These fields are calculated on the fly
+    total_paid = serializers.SerializerMethodField()
+    remaining = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at']
+
+    def get_total_paid(self, obj):
+        # Sum of advance + all partial payments
+        payments_sum = sum(p.amount for p in obj.payments.all())
+        return obj.advance_amount + payments_sum
+
+    def get_remaining(self, obj):
+        paid = self.get_total_paid(obj)
+        return obj.total_amount - paid
