@@ -135,10 +135,26 @@ STORAGES = {
     },
 }
 
-# CORS CONFIGURATION
-# We allow all origins initially so Vercel can connect without errors.
-# You can restrict this to your specific domain later if needed.
-CORS_ALLOW_ALL_ORIGINS = True
+# --- CORS & CSRF CONFIGURATION (UPDATED) ---
+
+# Instead of allowing all, we list the specific domains we trust.
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",                        # Local Development
+    "http://127.0.0.1:5173",                        # Local Development IP
+    "https://astrosoft-finance-tracker.vercel.app",  # Vercel Deployment
+    "https://finance.astrosofttech.dev",            # YOUR NEW CUSTOM DOMAIN
+    "https://web-production-6a19a.up.railway.app",  # Railway Backend
+]
+
+# CSRF Trusted Origins (Crucial for POST requests)
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-6a19a.up.railway.app',
+    'https://astrosoft-finance-tracker.vercel.app',
+    'https://finance.astrosofttech.dev',            # YOUR NEW CUSTOM DOMAIN
+]
+
 
 # REST FRAMEWORK CONFIG
 REST_FRAMEWORK = {
@@ -155,5 +171,3 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
-
-CSRF_TRUSTED_ORIGINS = ['https://web-production-6a19a.up.railway.app']
