@@ -93,6 +93,9 @@ class Customer(models.Model):
         max_digits=10, decimal_places=2, default=0)
     is_payment_confirmed = models.BooleanField(default=False)
 
+    # --- New Field Added Here ---
+    is_project_delivered = models.BooleanField(default=False)
+
     # Dates
     delivery_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

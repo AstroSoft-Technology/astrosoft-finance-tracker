@@ -11,6 +11,8 @@ import {
   Search,
   CreditCard,
   X,
+  Pencil,
+  Box,
 } from "lucide-react";
 
 const Customers = () => {
@@ -18,6 +20,10 @@ const Customers = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Edit Mode State
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -28,6 +34,7 @@ const Customers = () => {
     total_amount: "",
     advance_amount: "",
     is_payment_confirmed: false,
+    is_project_delivered: false, // New Field
     delivery_date: "",
   });
 
@@ -70,13 +77,45 @@ const Customers = () => {
     }
   };
 
+  // --- OPEN MODAL FOR NEW CLIENT ---
+  const handleOpenAdd = () => {
+    setIsEditMode(false);
+    setEditId(null);
+    setFormData({
+      name: "",
+      project_name: "",
+      domain_name: "",
+      description: "",
+      total_amount: "",
+      advance_amount: "",
+      is_payment_confirmed: false,
+      is_project_delivered: false,
+      delivery_date: "",
+    });
+    setShowAddModal(true);
+  };
+
+  // --- OPEN MODAL FOR EDITING ---
+  const handleEdit = (client) => {
+    setIsEditMode(true);
+    setEditId(client.id);
+    setFormData({
+      name: client.name,
+      project_name: client.project_name,
+      domain_name: client.domain_name || "",
+      description: client.description || "",
+      total_amount: client.total_amount,
+      advance_amount: client.advance_amount,
+      is_payment_confirmed: client.is_payment_confirmed,
+      is_project_delivered: client.is_project_delivered || false,
+      delivery_date: client.delivery_date || "",
+    });
+    setShowAddModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // --- FIX: Clean Data Before Sending ---
-    // 1. If Advance Amount is empty, send "0".
-    // 2. If Date is empty, send null (Backend hates empty strings for dates).
-    // 3. Ensure Total Amount is treated as a number.
     const payload = {
       ...formData,
       total_amount: Number(formData.total_amount),
@@ -86,34 +125,24 @@ const Customers = () => {
         formData.delivery_date === "" ? null : formData.delivery_date,
     };
 
-    console.log("Submitting Payload:", payload); // Debug log
-
     try {
-      await api.post("customers/", payload);
-      setShowAddModal(false);
-      // Reset Form
-      setFormData({
-        name: "",
-        project_name: "",
-        domain_name: "",
-        description: "",
-        total_amount: "",
-        advance_amount: "",
-        is_payment_confirmed: false,
-        delivery_date: "",
-      });
-      fetchCustomers();
-      alert("Customer added successfully!");
-    } catch (error) {
-      console.error("Error adding customer", error);
-
-      // --- ENHANCED ERROR REPORTING ---
-      // This will show exactly why the server rejected the data
-      if (error.response && error.response.data) {
-        const errorMsg = JSON.stringify(error.response.data, null, 2);
-        alert(`Server Rejected Data:\n${errorMsg}`);
+      if (isEditMode) {
+        // Update existing customer
+        await api.put(`customers/${editId}/`, payload);
+        alert("Client updated successfully!");
       } else {
-        alert("Failed to add customer. Check console for details.");
+        // Create new customer
+        await api.post("customers/", payload);
+        alert("Client added successfully!");
+      }
+      setShowAddModal(false);
+      fetchCustomers();
+    } catch (error) {
+      console.error("Error saving customer", error);
+      if (error.response && error.response.data) {
+        alert(`Server Error:\n${JSON.stringify(error.response.data, null, 2)}`);
+      } else {
+        alert("Failed to save. Check console.");
       }
     }
   };
@@ -128,14 +157,14 @@ const Customers = () => {
       setPaymentData({ amount: "", date: "", note: "" });
       fetchPayments(selectedCustomer.id);
       fetchCustomers();
-      alert("Payment recorded & Income added!");
+      alert("Payment recorded!");
     } catch (error) {
       alert("Failed to record payment.");
     }
   };
 
   const handleDelete = async (id) => {
-    if (confirm("Delete this customer?")) {
+    if (confirm("Delete this customer? This cannot be undone.")) {
       await api.delete(`customers/${id}/`);
       fetchCustomers();
     }
@@ -146,11 +175,24 @@ const Customers = () => {
       .format(val)
       .replace("LKR", "Rs.");
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.project_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- SORTING LOGIC ---
+  // 1. Filter by search term
+  // 2. Sort: Clients with DUE payments come first. Fully paid clients go to the bottom.
+  const processedCustomers = customers
+    .filter(
+      (c) =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.project_name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aDue = a.remaining > 0;
+      const bDue = b.remaining > 0;
+      // If A has due and B doesn't, A comes first (-1)
+      if (aDue && !bDue) return -1;
+      // If B has due and A doesn't, B comes first (1)
+      if (!aDue && bDue) return 1;
+      return 0; // Keep original order if both same status
+    });
 
   return (
     <div className="p-8 min-h-screen text-white">
@@ -173,8 +215,8 @@ const Customers = () => {
             />
           </div>
           <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-astro-blue hover:bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-blue-900/20"
+            onClick={handleOpenAdd}
+            className="bg-astro-blue hover:bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg"
           >
             <Plus size={20} /> Add Client
           </button>
@@ -183,22 +225,45 @@ const Customers = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredCustomers.map((client) => (
+        {processedCustomers.map((client) => (
           <div
             key={client.id}
-            className="bg-astro-card border border-gray-800 rounded-2xl p-6 hover:border-astro-blue transition-all group relative flex flex-col justify-between"
+            className={`border rounded-2xl p-6 transition-all group relative flex flex-col justify-between ${
+              client.remaining > 0
+                ? "bg-astro-card border-gray-800"
+                : "bg-gray-900/50 border-gray-800 opacity-80"
+            }`}
           >
-            <button
-              onClick={() => handleDelete(client.id)}
-              className="absolute top-4 right-4 text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <XCircle size={20} />
-            </button>
+            {/* Action Buttons (Edit / Delete) */}
+            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => handleEdit(client)}
+                className="text-gray-400 hover:text-blue-400 bg-gray-800 p-2 rounded-full"
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                onClick={() => handleDelete(client.id)}
+                className="text-gray-400 hover:text-red-500 bg-gray-800 p-2 rounded-full"
+              >
+                <XCircle size={16} />
+              </button>
+            </div>
 
             <div>
               <div className="flex items-center gap-4 mb-4">
-                <div className="bg-gray-800 p-3 rounded-xl text-astro-blue">
-                  <Users size={24} />
+                <div
+                  className={`p-3 rounded-xl ${
+                    client.remaining > 0
+                      ? "bg-gray-800 text-astro-blue"
+                      : "bg-green-900/20 text-green-500"
+                  }`}
+                >
+                  {client.is_project_delivered ? (
+                    <Box size={24} />
+                  ) : (
+                    <Users size={24} />
+                  )}
                 </div>
                 <div>
                   <h3 className="font-bold text-lg text-white">
@@ -222,16 +287,24 @@ const Customers = () => {
                     </a>
                   </div>
                 )}
-                {/* --- Display Expected Delivery --- */}
-                {client.delivery_date && (
+
+                {/* Delivery Date & Status */}
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-gray-500" />
                     <span className="text-gray-400">
                       Due:{" "}
-                      <span className="text-white">{client.delivery_date}</span>
+                      <span className="text-white">
+                        {client.delivery_date || "N/A"}
+                      </span>
                     </span>
                   </div>
-                )}
+                  {client.is_project_delivered && (
+                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded border border-blue-500/30 uppercase font-bold">
+                      Delivered
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Progress Bar */}
@@ -247,7 +320,7 @@ const Customers = () => {
                 <div className="w-full bg-gray-800 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full ${
-                      client.remaining <= 0 ? "bg-green-500" : "bg-astro-blue"
+                      client.remaining <= 0 ? "bg-green-500" : "bg-red-500"
                     }`}
                     style={{
                       width: `${Math.min(
@@ -283,17 +356,18 @@ const Customers = () => {
         ))}
       </div>
 
-      {/* --- ADD CUSTOMER MODAL --- */}
+      {/* --- ADD/EDIT CUSTOMER MODAL --- */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-full max-w-2xl rounded-2xl border border-gray-700 p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-6 border-b border-gray-700 pb-4">
-              New Project Details
+              {isEditMode ? "Edit Project Details" : "New Project Details"}
             </h3>
             <form
               onSubmit={handleSubmit}
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
+              {/* Name & Project */}
               <div className="md:col-span-1">
                 <label className="text-xs text-astro-blue uppercase font-bold mb-1 block">
                   Customer Name *
@@ -307,7 +381,6 @@ const Customers = () => {
                   }
                 />
               </div>
-
               <div className="md:col-span-1">
                 <label className="text-xs text-astro-blue uppercase font-bold mb-1 block">
                   Project Name *
@@ -322,6 +395,7 @@ const Customers = () => {
                 />
               </div>
 
+              {/* Financials */}
               <div className="md:col-span-1">
                 <label className="text-xs text-green-500 uppercase font-bold mb-1 block">
                   Total Amount (LKR) *
@@ -336,7 +410,6 @@ const Customers = () => {
                   }
                 />
               </div>
-
               <div className="md:col-span-1">
                 <label className="text-xs text-green-500 uppercase font-bold mb-1 block">
                   Advance Payment
@@ -352,6 +425,7 @@ const Customers = () => {
                 />
               </div>
 
+              {/* Domain & Date */}
               <div className="md:col-span-2">
                 <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">
                   Domain Name (Optional)
@@ -364,10 +438,9 @@ const Customers = () => {
                   }
                 />
               </div>
-
               <div className="md:col-span-1">
                 <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">
-                  Expected Project Delivery
+                  Expected Delivery
                 </label>
                 <input
                   type="date"
@@ -379,8 +452,9 @@ const Customers = () => {
                 />
               </div>
 
-              <div className="md:col-span-1 flex items-end">
-                <label className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg w-full cursor-pointer border border-gray-700 hover:border-green-500 transition-colors">
+              {/* Toggles */}
+              <div className="md:col-span-1 flex flex-col justify-end gap-2">
+                <label className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-lg w-full cursor-pointer border border-gray-700 hover:border-green-500 transition-colors">
                   <input
                     type="checkbox"
                     className="w-5 h-5 accent-green-500"
@@ -396,8 +470,27 @@ const Customers = () => {
                     Payment Confirmed?
                   </span>
                 </label>
+
+                {/* NEW: Project Delivered Checkbox */}
+                <label className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-lg w-full cursor-pointer border border-gray-700 hover:border-blue-500 transition-colors">
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 accent-blue-500"
+                    checked={formData.is_project_delivered}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        is_project_delivered: e.target.checked,
+                      })
+                    }
+                  />
+                  <span className="text-sm font-bold text-white">
+                    Project Delivered?
+                  </span>
+                </label>
               </div>
 
+              {/* Description */}
               <div className="md:col-span-2">
                 <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">
                   Description
@@ -412,6 +505,7 @@ const Customers = () => {
                 ></textarea>
               </div>
 
+              {/* Buttons */}
               <div className="col-span-2 flex gap-3 mt-4">
                 <button
                   type="button"
@@ -422,9 +516,9 @@ const Customers = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-astro-blue text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg shadow-blue-900/20"
+                  className="flex-1 py-3 bg-astro-blue text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-lg"
                 >
-                  Save Customer
+                  {isEditMode ? "Update Project" : "Save Project"}
                 </button>
               </div>
             </form>
@@ -432,7 +526,7 @@ const Customers = () => {
         </div>
       )}
 
-      {/* --- PAYMENT MANAGEMENT MODAL --- */}
+      {/* --- PAYMENT MANAGEMENT MODAL (Kept same) --- */}
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-full max-w-lg rounded-2xl border border-gray-700 flex flex-col max-h-[80vh]">
@@ -449,7 +543,6 @@ const Customers = () => {
             </div>
 
             <div className="p-6 overflow-y-auto">
-              {/* Add Payment Form */}
               <form
                 onSubmit={handleAddPayment}
                 className="mb-6 bg-gray-800/50 p-4 rounded-xl border border-gray-700"
@@ -494,7 +587,6 @@ const Customers = () => {
                 </button>
               </form>
 
-              {/* History List */}
               <h4 className="text-sm font-bold text-gray-400 mb-3 uppercase">
                 Payment History
               </h4>
@@ -512,7 +604,6 @@ const Customers = () => {
                     </span>
                   </div>
                 )}
-
                 {paymentHistory.map((pay) => (
                   <div
                     key={pay.id}
@@ -529,22 +620,6 @@ const Customers = () => {
                     </span>
                   </div>
                 ))}
-
-                {paymentHistory.length === 0 &&
-                  parseFloat(selectedCustomer.advance_amount) === 0 && (
-                    <p className="text-center text-gray-500 text-sm">
-                      No payments recorded yet.
-                    </p>
-                  )}
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-gray-700 bg-astro-dark rounded-b-2xl">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-400">Total Collected:</span>
-                <span className="font-bold text-xl text-green-400">
-                  {formatCurrency(selectedCustomer.total_paid)}
-                </span>
               </div>
             </div>
           </div>
