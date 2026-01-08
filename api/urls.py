@@ -18,6 +18,10 @@ router.register(r'customer-payments', CustomerPaymentViewSet,
                 basename='customer-payment')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-    path('api/dashboard/', DashboardStatsView.as_view(), name='dashboard-stats'),
+    # Router handles all the /api/income, /api/expenses, etc.
+    path('', include(router.urls)),
+
+    # This creates the link: /api/stats/
+    # The frontend is specifically asking for "stats", so we must name it "stats"!
+    path('stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
 ]
