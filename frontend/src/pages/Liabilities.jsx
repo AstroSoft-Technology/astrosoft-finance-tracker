@@ -3,7 +3,6 @@ import api from "../api";
 import {
   Trash2,
   Plus,
-  Calendar,
   Landmark,
   AlertCircle,
   X,
@@ -19,8 +18,6 @@ const Liabilities = () => {
     due_date: "",
   });
   const [loading, setLoading] = useState(false);
-
-  // Payment Modal State
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [selectedLiability, setSelectedLiability] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -68,25 +65,22 @@ const Liabilities = () => {
     }
   };
 
-  // Open Modal
   const openPayModal = (liability) => {
     setSelectedLiability(liability);
     setPaymentAmount("");
     setIsPayModalOpen(true);
   };
 
-  // Handle Payment Submission
   const handlePayment = async (e) => {
     e.preventDefault();
     if (!selectedLiability) return;
-
     try {
       await api.post(`liabilities/${selectedLiability.id}/pay/`, {
         amount: paymentAmount,
-        date: new Date().toISOString().split("T")[0], // Record payment date as today
+        date: new Date().toISOString().split("T")[0],
       });
       setIsPayModalOpen(false);
-      fetchLiabilities(); // Refresh data
+      fetchLiabilities();
       alert(`Payment of Rs. ${paymentAmount} recorded successfully!`);
     } catch (error) {
       alert(error.response?.data?.error || "Payment failed");
@@ -109,14 +103,18 @@ const Liabilities = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen text-white relative">
+    // RESPONSIVE: p-4 on mobile
+    <div className="p-4 md:p-8 min-h-screen text-white relative">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">Liabilities Management</h1>
-        <p className="text-astro-text-muted mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold">
+          Liabilities Management
+        </h1>
+        <p className="text-astro-text-muted mt-1 text-sm md:text-base">
           Track loans, credit cards, and debt repayment.
         </p>
       </header>
 
+      {/* RESPONSIVE: Stacks vertically on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Input Form */}
         <div className="bg-astro-card p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
@@ -193,7 +191,7 @@ const Liabilities = () => {
           <div className="flex justify-between items-end mb-2">
             <h2 className="text-xl font-bold">Active Debts</h2>
             <span className="text-astro-text-muted text-sm">
-              {liabilities.length} records found
+              {liabilities.length} records
             </span>
           </div>
 
@@ -279,7 +277,6 @@ const Liabilities = () => {
                     <button
                       onClick={() => handleDelete(item.id)}
                       className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                      title="Delete"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -294,7 +291,8 @@ const Liabilities = () => {
       {/* --- PAYMENT MODAL --- */}
       {isPayModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-astro-card w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6">
+          {/* RESPONSIVE: Width adjustment for mobile */}
+          <div className="bg-astro-card w-[95%] md:w-full max-w-md rounded-2xl border border-gray-700 shadow-2xl p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">Pay Debt</h3>
               <button
@@ -332,7 +330,6 @@ const Liabilities = () => {
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
               </div>
-
               <div className="flex gap-3">
                 <button
                   type="button"

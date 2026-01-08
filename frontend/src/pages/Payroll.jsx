@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import {
-  Users,
-  Plus,
-  DollarSign,
-  UserPlus,
-  Trash2,
-  CheckCircle,
-  X,
-} from "lucide-react";
+import { Users, Plus, DollarSign, Trash2, CheckCircle, X } from "lucide-react";
 
-// --- NEW COMPONENT: Payment History Modal ---
+// --- Payment History Modal ---
 const PaymentHistoryModal = ({ employee, onClose }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,8 +10,6 @@ const PaymentHistoryModal = ({ employee, onClose }) => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        // Fetches payments filtered by specific employee ID
-        // Note: 'payroll/' matches the endpoint used in fetchData()
         const res = await api.get(`payroll/?employee=${employee.id}`);
         setHistory(res.data);
       } catch (error) {
@@ -38,7 +28,8 @@ const PaymentHistoryModal = ({ employee, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-astro-card w-full max-w-2xl rounded-2xl border border-gray-700 shadow-2xl flex flex-col max-h-[80vh]">
+      {/* RESPONSIVE: Width fixes */}
+      <div className="bg-astro-card w-[95%] md:w-full max-w-2xl rounded-2xl border border-gray-700 shadow-2xl flex flex-col max-h-[80vh]">
         <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-astro-dark rounded-t-2xl">
           <div>
             <h2 className="text-xl font-bold text-white">Payment History</h2>
@@ -62,11 +53,12 @@ const PaymentHistoryModal = ({ employee, onClose }) => {
             </div>
           ) : history.length === 0 ? (
             <div className="text-center py-8 text-gray-500 bg-gray-800/30 rounded-xl border border-dashed border-gray-700">
-              No payment records found for this employee.
+              No payment records found.
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-700">
-              <table className="w-full text-left">
+            <div className="overflow-hidden rounded-xl border border-gray-700 overflow-x-auto">
+              {/* RESPONSIVE: min-w to force scroll on small screens */}
+              <table className="w-full text-left min-w-125">
                 <thead className="bg-gray-800 text-gray-400 uppercase text-xs">
                   <tr>
                     <th className="px-6 py-4 font-semibold">Date</th>
@@ -98,7 +90,6 @@ const PaymentHistoryModal = ({ employee, onClose }) => {
             </div>
           )}
         </div>
-
         <div className="p-6 border-t border-gray-700 bg-astro-dark rounded-b-2xl flex justify-end">
           <button
             onClick={onClose}
@@ -115,12 +106,8 @@ const PaymentHistoryModal = ({ employee, onClose }) => {
 const Payroll = () => {
   const [employees, setEmployees] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [activeTab, setActiveTab] = useState("team"); // 'team' or 'history'
-
-  // --- ADDED STATE: Track selected employee for modal ---
+  const [activeTab, setActiveTab] = useState("team");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  // Forms
   const [showAddEmp, setShowAddEmp] = useState(false);
   const [newEmp, setNewEmp] = useState({
     name: "",
@@ -128,9 +115,7 @@ const Payroll = () => {
     base_salary: "0",
     email: "",
   });
-
   const [showPayModal, setShowPayModal] = useState(false);
-
   const [payData, setPayData] = useState({
     employee: "",
     amount: "",
@@ -179,13 +164,12 @@ const Payroll = () => {
       fetchData();
       alert("Salary Paid & Expense Recorded!");
     } catch (err) {
-      console.error(err);
-      alert("Error processing payment. Check console for details.");
+      alert("Error processing payment.");
     }
   };
 
   const handleDeleteEmployee = async (id, e) => {
-    e.stopPropagation(); // Prevent opening the modal when clicking delete
+    e.stopPropagation();
     if (confirm("Delete this employee?")) {
       try {
         await api.delete(`employees/${id}/`);
@@ -202,27 +186,29 @@ const Payroll = () => {
       .replace("LKR", "Rs.");
 
   return (
-    <div className="p-8 min-h-screen text-white">
-      <header className="mb-8 flex justify-between items-center">
+    // RESPONSIVE: p-4 on mobile
+    <div className="p-4 md:p-8 min-h-screen text-white">
+      {/* RESPONSIVE: Header Flex Col on Mobile */}
+      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Payroll Management</h1>
-          <p className="text-astro-text-muted mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold">Payroll Management</h1>
+          <p className="text-astro-text-muted mt-1 text-sm md:text-base">
             Manage team salaries and payments.
           </p>
         </div>
         <button
           onClick={() => setShowPayModal(true)}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-green-900/20"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-green-900/20 w-full md:w-auto justify-center"
         >
           <DollarSign size={20} /> Process Payroll
         </button>
       </header>
 
-      {/* Tabs */}
-      <div className="flex gap-6 mb-8 border-b border-gray-800">
+      {/* Tabs - horizontal scroll on very small screens if needed */}
+      <div className="flex gap-6 mb-8 border-b border-gray-800 overflow-x-auto">
         <button
           onClick={() => setActiveTab("team")}
-          className={`pb-4 px-2 font-medium transition-colors ${
+          className={`pb-4 px-2 font-medium transition-colors whitespace-nowrap ${
             activeTab === "team"
               ? "text-astro-blue border-b-2 border-astro-blue"
               : "text-astro-text-muted"
@@ -232,7 +218,7 @@ const Payroll = () => {
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`pb-4 px-2 font-medium transition-colors ${
+          className={`pb-4 px-2 font-medium transition-colors whitespace-nowrap ${
             activeTab === "history"
               ? "text-astro-blue border-b-2 border-astro-blue"
               : "text-astro-text-muted"
@@ -245,7 +231,6 @@ const Payroll = () => {
       {/* TEAM TAB */}
       {activeTab === "team" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Add New Card */}
           <button
             onClick={() => setShowAddEmp(true)}
             className="border-2 border-dashed border-gray-700 rounded-2xl p-6 flex flex-col items-center justify-center text-astro-text-muted hover:border-astro-blue hover:text-astro-blue transition-all h-64"
@@ -259,7 +244,7 @@ const Payroll = () => {
           {employees.map((emp) => (
             <div
               key={emp.id}
-              onClick={() => setSelectedEmployee(emp)} // --- ADDED: Make card clickable ---
+              onClick={() => setSelectedEmployee(emp)}
               className="bg-astro-card p-6 rounded-2xl border border-gray-800 shadow-lg relative group h-64 flex flex-col justify-between cursor-pointer hover:border-astro-blue hover:shadow-astro-blue/10 transition-all"
             >
               <div>
@@ -279,7 +264,6 @@ const Payroll = () => {
                 </h3>
                 <p className="text-astro-text-muted text-sm">{emp.role}</p>
               </div>
-
               <div className="pt-4 border-t border-gray-800 flex justify-between items-center">
                 <div>
                   <p className="text-xs text-astro-text-muted">Status</p>
@@ -299,8 +283,9 @@ const Payroll = () => {
 
       {/* HISTORY TAB */}
       {activeTab === "history" && (
-        <div className="bg-astro-card rounded-2xl border border-gray-800 overflow-hidden">
-          <table className="w-full text-left">
+        // RESPONSIVE: overflow-x-auto for table scrolling
+        <div className="bg-astro-card rounded-2xl border border-gray-800 overflow-hidden overflow-x-auto">
+          <table className="w-full text-left min-w-150">
             <thead className="bg-astro-dark text-astro-text-muted text-xs uppercase">
               <tr>
                 <th className="p-4">Date</th>
@@ -344,7 +329,7 @@ const Payroll = () => {
       {/* --- ADD EMPLOYEE MODAL --- */}
       {showAddEmp && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-astro-card w-full max-w-md rounded-2xl border border-gray-700 p-6">
+          <div className="bg-astro-card w-[95%] md:w-full max-w-md rounded-2xl border border-gray-700 p-6">
             <h3 className="text-xl font-bold mb-4">Add Team Member</h3>
             <form onSubmit={handleAddEmployee} className="space-y-4">
               <div>
@@ -353,7 +338,6 @@ const Payroll = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. John Doe"
                   required
                   className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-astro-blue focus:outline-none"
                   value={newEmp.name}
@@ -362,14 +346,12 @@ const Payroll = () => {
                   }
                 />
               </div>
-
               <div>
                 <label className="text-sm text-astro-text-muted mb-1 block">
                   Job Title
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Senior Developer"
                   required
                   className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-astro-blue focus:outline-none"
                   value={newEmp.role}
@@ -378,7 +360,6 @@ const Payroll = () => {
                   }
                 />
               </div>
-
               <div className="flex gap-3 mt-6">
                 <button
                   type="button"
@@ -402,7 +383,7 @@ const Payroll = () => {
       {/* --- PROCESS PAY MODAL --- */}
       {showPayModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-astro-card w-full max-w-md rounded-2xl border border-gray-700 p-6">
+          <div className="bg-astro-card w-[95%] md:w-full max-w-md rounded-2xl border border-gray-700 p-6">
             <h3 className="text-xl font-bold mb-4">Process Salary</h3>
             <form onSubmit={handleProcessPay} className="space-y-4">
               <div>
@@ -412,13 +393,13 @@ const Payroll = () => {
                 <select
                   required
                   className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 mt-1 text-white focus:border-green-600 focus:outline-none"
-                  onChange={(e) => {
+                  onChange={(e) =>
                     setPayData({
                       ...payData,
                       employee: e.target.value,
                       amount: "",
-                    });
-                  }}
+                    })
+                  }
                 >
                   <option value="">Choose...</option>
                   {employees.map((e) => (
@@ -428,15 +409,11 @@ const Payroll = () => {
                   ))}
                 </select>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-astro-text-muted">
-                    Payment Title
-                  </label>
+                  <label className="text-sm text-astro-text-muted">Title</label>
                   <input
                     type="text"
-                    placeholder="e.g. Jan Salary"
                     required
                     className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 mt-1 text-white focus:border-green-600 focus:outline-none"
                     value={payData.title}
@@ -458,14 +435,12 @@ const Payroll = () => {
                   />
                 </div>
               </div>
-
               <div>
                 <label className="text-sm text-astro-text-muted">
                   Amount (LKR)
                 </label>
                 <input
                   type="number"
-                  placeholder="Enter amount..."
                   required
                   className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 mt-1 text-green-400 font-bold focus:border-green-600 focus:outline-none"
                   value={payData.amount}
@@ -474,7 +449,6 @@ const Payroll = () => {
                   }
                 />
               </div>
-
               <div className="flex gap-3 mt-6">
                 <button
                   type="button"
@@ -495,7 +469,6 @@ const Payroll = () => {
         </div>
       )}
 
-      {/* --- ADDED: Render Payment History Modal --- */}
       {selectedEmployee && (
         <PaymentHistoryModal
           employee={selectedEmployee}

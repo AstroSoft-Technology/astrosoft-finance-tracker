@@ -12,19 +12,14 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Use the environment variable for the Login URL too!
       const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-
       const response = await axios.post(`${API_URL}/api/token/`, {
         username,
         password,
       });
 
-      // Save the token "Key" to browser storage
       localStorage.setItem("access_token", response.data.access);
       localStorage.setItem("refresh_token", response.data.refresh);
-
-      // Redirect to Dashboard
       navigate("/");
     } catch (err) {
       setError("Invalid credentials. Please try again.");
@@ -32,9 +27,9 @@ const Login = () => {
   };
 
   return (
+    // RESPONSIVE: p-4 on mobile to prevent touching edges
     <div className="min-h-screen flex items-center justify-center bg-astro-dark p-4">
       <div className="bg-astro-card p-8 rounded-2xl shadow-2xl shadow-black/50 border border-gray-800 w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <img
             src={logo}
@@ -47,14 +42,12 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-lg mb-6 text-center">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-astro-text-muted mb-2">

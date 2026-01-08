@@ -193,7 +193,8 @@ const Customers = () => {
   );
 
   return (
-    <div className="p-8 min-h-screen text-white">
+    // RESPONSIVE CHANGE: p-4 for mobile, md:p-8 for desktop
+    <div className="p-4 md:p-8 min-h-screen text-white">
       <header className="mb-8 flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Client Management</h1>
@@ -221,6 +222,7 @@ const Customers = () => {
         </div>
       </header>
 
+      {/* Grid adapts automatically due to grid-cols-1 md:grid-cols-2... */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {processedCustomers.map((client) => (
           <div
@@ -352,7 +354,8 @@ const Customers = () => {
       {/* --- ADD/EDIT MODAL --- */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-astro-card w-full max-w-2xl rounded-2xl border border-gray-700 p-6 max-h-[90vh] overflow-y-auto">
+          {/* RESPONSIVE CHANGE: w-[95%] for mobile, max-w-2xl mx-auto to center */}
+          <div className="bg-astro-card w-[95%] md:w-full max-w-2xl mx-auto rounded-2xl border border-gray-700 p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-6 border-b border-gray-700 pb-4">
               {isEditMode ? "Edit Project Details" : "New Project Details"}
             </h3>
@@ -527,7 +530,8 @@ const Customers = () => {
 
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-astro-card w-full max-w-lg rounded-2xl border border-gray-700 flex flex-col max-h-[80vh]">
+          {/* RESPONSIVE CHANGE: w-[95%] for mobile, max-w-lg mx-auto to center */}
+          <div className="bg-astro-card w-[95%] md:w-full max-w-lg mx-auto rounded-2xl border border-gray-700 flex flex-col max-h-[80vh]">
             <div className="p-6 border-b border-gray-700 flex justify-between items-center bg-astro-dark rounded-t-2xl">
               <div>
                 <h3 className="text-lg font-bold">Manage Payments</h3>

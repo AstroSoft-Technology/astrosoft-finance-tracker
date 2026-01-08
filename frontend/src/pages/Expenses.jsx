@@ -5,14 +5,13 @@ import { Trash2, Plus, Calendar, CreditCard, Tag } from "lucide-react";
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
   const [formData, setFormData] = useState({
-    category: "Food", // Default first option
+    category: "Food",
     amount: "",
     date: new Date().toISOString().split("T")[0],
     description: "",
   });
   const [loading, setLoading] = useState(false);
 
-  // Categories matching your Django Model
   const CATEGORIES = [
     "Food",
     "Transport",
@@ -78,14 +77,16 @@ const Expenses = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen text-white">
+    // RESPONSIVE: p-4 on mobile
+    <div className="p-4 md:p-8 min-h-screen text-white">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">Expense Tracking</h1>
-        <p className="text-astro-text-muted mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold">Expense Tracking</h1>
+        <p className="text-astro-text-muted mt-1 text-sm md:text-base">
           Monitor your spending and manage costs.
         </p>
       </header>
 
+      {/* RESPONSIVE: Stacks form above list on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Input Form */}
         <div className="bg-astro-card p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
@@ -93,7 +94,6 @@ const Expenses = () => {
             <Plus size={20} /> Add Expense
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Category Dropdown */}
             <div>
               <label className="text-sm text-astro-text-muted">Category</label>
               <div className="relative">
@@ -161,7 +161,7 @@ const Expenses = () => {
                 Description (Optional)
               </label>
               <textarea
-                placeholder="Details about this expense..."
+                placeholder="Details..."
                 className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 mt-1 focus:border-red-500 focus:outline-none transition-colors"
                 value={formData.description}
                 onChange={(e) =>
@@ -182,36 +182,35 @@ const Expenses = () => {
 
         {/* Right Column: List of Expenses */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Summary Header */}
           <div className="flex justify-between items-end mb-2">
             <h2 className="text-xl font-bold">Recent Spending</h2>
             <span className="text-astro-text-muted text-sm">
-              {expenses.length} records found
+              {expenses.length} records
             </span>
           </div>
 
           {expenses.length === 0 ? (
             <div className="bg-astro-card p-12 rounded-2xl border border-gray-800 text-center text-astro-text-muted">
-              No expenses recorded yet. Good job saving money!
+              No expenses recorded yet.
             </div>
           ) : (
             expenses.map((expense) => (
               <div
                 key={expense.id}
-                className="group bg-astro-card p-5 rounded-2xl border border-gray-800 flex justify-between items-center hover:border-red-500/50 transition-all shadow-sm"
+                className="group bg-astro-card p-4 md:p-5 rounded-2xl border border-gray-800 flex justify-between items-center hover:border-red-500/50 transition-all shadow-sm"
               >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-astro-dark rounded-full border border-gray-800 text-red-500">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="p-3 bg-astro-dark rounded-full border border-gray-800 text-red-500 shrink-0">
                     <Tag size={20} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg">
+                  <div className="overflow-hidden">
+                    <h3 className="font-bold text-white text-base md:text-lg truncate">
                       {expense.category}
                     </h3>
-                    <p className="text-sm text-astro-text-muted flex items-center gap-2">
+                    <p className="text-xs md:text-sm text-astro-text-muted flex items-center gap-2">
                       <Calendar size={12} /> {expense.date}
                       {expense.description && (
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 truncate max-w-25 md:max-w-xs">
                           • {expense.description}
                         </span>
                       )}
@@ -219,15 +218,13 @@ const Expenses = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <span className="text-xl font-bold text-red-400">
+                <div className="flex items-center gap-3 md:gap-6">
+                  <span className="text-base md:text-xl font-bold text-red-400 whitespace-nowrap">
                     - {formatCurrency(expense.amount)}
                   </span>
-                  {/* Delete Button - Only visible on Hover (group-hover) */}
                   <button
                     onClick={() => handleDelete(expense.id)}
-                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                    title="Delete Record"
+                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                   >
                     <Trash2 size={18} />
                   </button>

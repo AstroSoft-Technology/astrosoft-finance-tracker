@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // Use our secure API helper
+import api from "../api";
 import { Trash2, Plus, Calendar, DollarSign } from "lucide-react";
 
 const Income = () => {
@@ -7,12 +7,11 @@ const Income = () => {
   const [formData, setFormData] = useState({
     source: "",
     amount: "",
-    date: new Date().toISOString().split("T")[0], // Default to today
+    date: new Date().toISOString().split("T")[0],
     description: "",
   });
   const [loading, setLoading] = useState(false);
 
-  // Fetch Income Data on Load
   useEffect(() => {
     fetchIncomes();
   }, []);
@@ -36,8 +35,8 @@ const Income = () => {
         amount: "",
         date: new Date().toISOString().split("T")[0],
         description: "",
-      }); // Reset form
-      fetchIncomes(); // Refresh list
+      });
+      fetchIncomes();
     } catch (error) {
       alert("Failed to add income");
     } finally {
@@ -49,7 +48,7 @@ const Income = () => {
     if (confirm("Are you sure you want to delete this record?")) {
       try {
         await api.delete(`income/${id}/`);
-        fetchIncomes(); // Refresh list after delete
+        fetchIncomes();
       } catch (error) {
         alert("Failed to delete");
       }
@@ -67,14 +66,16 @@ const Income = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen text-white">
+    // RESPONSIVE: p-4 on mobile
+    <div className="p-4 md:p-8 min-h-screen text-white">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">Income Management</h1>
-        <p className="text-astro-text-muted mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold">Income Management</h1>
+        <p className="text-astro-text-muted mt-1 text-sm md:text-base">
           Track and manage your revenue sources.
         </p>
       </header>
 
+      {/* RESPONSIVE: Stacks form above list on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Input Form */}
         <div className="bg-astro-card p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
@@ -161,36 +162,35 @@ const Income = () => {
 
         {/* Right Column: List of Incomes */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Summary Header */}
           <div className="flex justify-between items-end mb-2">
             <h2 className="text-xl font-bold">Recent Transactions</h2>
             <span className="text-astro-text-muted text-sm">
-              {incomes.length} records found
+              {incomes.length} records
             </span>
           </div>
 
           {incomes.length === 0 ? (
             <div className="bg-astro-card p-12 rounded-2xl border border-gray-800 text-center text-astro-text-muted">
-              No income records found. Add one to get started!
+              No income records found.
             </div>
           ) : (
             incomes.map((income) => (
               <div
                 key={income.id}
-                className="group bg-astro-card p-5 rounded-2xl border border-gray-800 flex justify-between items-center hover:border-astro-light-blue/50 transition-all shadow-sm"
+                className="group bg-astro-card p-4 md:p-5 rounded-2xl border border-gray-800 flex justify-between items-center hover:border-astro-light-blue/50 transition-all shadow-sm"
               >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-astro-dark rounded-full border border-gray-800 text-green-500">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="p-3 bg-astro-dark rounded-full border border-gray-800 text-green-500 shrink-0">
                     <DollarSign size={20} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg">
+                  <div className="overflow-hidden">
+                    <h3 className="font-bold text-white text-base md:text-lg truncate">
                       {income.source}
                     </h3>
-                    <p className="text-sm text-astro-text-muted flex items-center gap-2">
+                    <p className="text-xs md:text-sm text-astro-text-muted flex items-center gap-2">
                       <Calendar size={12} /> {income.date}
                       {income.description && (
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 truncate max-w-25 md:max-w-xs">
                           • {income.description}
                         </span>
                       )}
@@ -198,15 +198,13 @@ const Income = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <span className="text-xl font-bold text-green-400">
+                <div className="flex items-center gap-3 md:gap-6">
+                  <span className="text-base md:text-xl font-bold text-green-400 whitespace-nowrap">
                     + {formatCurrency(income.amount)}
                   </span>
-                  {/* Delete Button - Only visible on Hover (group-hover) */}
                   <button
                     onClick={() => handleDelete(income.id)}
-                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                    title="Delete Record"
+                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                   >
                     <Trash2 size={18} />
                   </button>

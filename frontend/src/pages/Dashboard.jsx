@@ -46,16 +46,18 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen text-white pb-20">
+    // RESPONSIVE: Reduced padding on mobile (p-4)
+    <div className="p-4 md:p-8 min-h-screen text-white pb-20">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">Overview</h1>
-        <p className="text-astro-text-muted mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold">Overview</h1>
+        <p className="text-astro-text-muted mt-1 text-sm md:text-base">
           Financial summary and recent activity.
         </p>
       </header>
 
       {/* --- Summary Cards Row --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* RESPONSIVE: Grid cols 1 on mobile, 2 on tablet, 4 on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         {/* Balance Card */}
         <div className="bg-astro-card p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -110,8 +112,9 @@ const Dashboard = () => {
       </div>
 
       {/* --- Main Content Split --- */}
+      {/* RESPONSIVE: Stack vertically on mobile, side-by-side on large screens */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Charts Area (Active) */}
+        {/* Left: Charts Area */}
         <div className="lg:col-span-2 space-y-6">
           <DashboardCharts
             monthlyData={stats.monthly_stats}
@@ -138,7 +141,7 @@ const Dashboard = () => {
                   key={`${t.type}-${t.id}-${index}`}
                   className="flex items-center justify-between group"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 md:gap-4">
                     {/* Icon based on type */}
                     <div
                       className={`p-2 rounded-lg ${
@@ -154,8 +157,8 @@ const Dashboard = () => {
                       )}
                     </div>
 
-                    <div>
-                      <p className="font-medium text-white text-sm">
+                    <div className="max-w-30 md:max-w-xs overflow-hidden">
+                      <p className="font-medium text-white text-sm truncate">
                         {t.title}
                       </p>
                       <p className="text-xs text-astro-text-muted flex items-center gap-1">
@@ -165,7 +168,7 @@ const Dashboard = () => {
                   </div>
 
                   <span
-                    className={`font-bold text-sm ${
+                    className={`font-bold text-sm whitespace-nowrap ${
                       t.type === "income"
                         ? "text-astro-light-blue"
                         : "text-red-500"
@@ -177,10 +180,6 @@ const Dashboard = () => {
               ))
             )}
           </div>
-
-          <button className="w-full mt-6 py-2 text-sm text-astro-text-muted hover:text-white hover:bg-gray-800 rounded-lg transition-colors border border-dashed border-gray-700">
-            View All History
-          </button>
         </div>
       </div>
     </div>
