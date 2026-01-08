@@ -34,7 +34,7 @@ const Customers = () => {
     total_amount: "",
     advance_amount: "",
     is_payment_confirmed: false,
-    is_project_delivered: false, // New Field
+    is_project_delivered: false,
     delivery_date: "",
   });
 
@@ -77,7 +77,6 @@ const Customers = () => {
     }
   };
 
-  // --- OPEN MODAL FOR NEW CLIENT ---
   const handleOpenAdd = () => {
     setIsEditMode(false);
     setEditId(null);
@@ -95,7 +94,6 @@ const Customers = () => {
     setShowAddModal(true);
   };
 
-  // --- OPEN MODAL FOR EDITING ---
   const handleEdit = (client) => {
     setIsEditMode(true);
     setEditId(client.id);
@@ -127,11 +125,9 @@ const Customers = () => {
 
     try {
       if (isEditMode) {
-        // Update existing customer
         await api.put(`customers/${editId}/`, payload);
         alert("Client updated successfully!");
       } else {
-        // Create new customer
         await api.post("customers/", payload);
         alert("Client added successfully!");
       }
@@ -175,9 +171,7 @@ const Customers = () => {
       .format(val)
       .replace("LKR", "Rs.");
 
-  // --- SORTING LOGIC ---
-  // 1. Filter by search term
-  // 2. Sort: Clients with DUE payments come first. Fully paid clients go to the bottom.
+  // SORT: Due payments first
   const processedCustomers = customers
     .filter(
       (c) =>
@@ -187,12 +181,16 @@ const Customers = () => {
     .sort((a, b) => {
       const aDue = a.remaining > 0;
       const bDue = b.remaining > 0;
-      // If A has due and B doesn't, A comes first (-1)
       if (aDue && !bDue) return -1;
-      // If B has due and A doesn't, B comes first (1)
       if (!aDue && bDue) return 1;
-      return 0; // Keep original order if both same status
+      return 0;
     });
+
+  // Calculate Remaining for the Add/Edit Modal
+  const calculatedRemaining = Math.max(
+    0,
+    Number(formData.total_amount || 0) - Number(formData.advance_amount || 0)
+  );
 
   return (
     <div className="p-8 min-h-screen text-white">
@@ -223,7 +221,6 @@ const Customers = () => {
         </div>
       </header>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {processedCustomers.map((client) => (
           <div
@@ -234,7 +231,6 @@ const Customers = () => {
                 : "bg-gray-900/50 border-gray-800 opacity-80"
             }`}
           >
-            {/* Action Buttons (Edit / Delete) */}
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => handleEdit(client)}
@@ -287,8 +283,6 @@ const Customers = () => {
                     </a>
                   </div>
                 )}
-
-                {/* Delivery Date & Status */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar size={16} className="text-gray-500" />
@@ -307,7 +301,6 @@ const Customers = () => {
                 </div>
               </div>
 
-              {/* Progress Bar */}
               <div className="mb-4">
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-400">
@@ -356,7 +349,7 @@ const Customers = () => {
         ))}
       </div>
 
-      {/* --- ADD/EDIT CUSTOMER MODAL --- */}
+      {/* --- ADD/EDIT MODAL --- */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-full max-w-2xl rounded-2xl border border-gray-700 p-6 max-h-[90vh] overflow-y-auto">
@@ -367,7 +360,6 @@ const Customers = () => {
               onSubmit={handleSubmit}
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              {/* Name & Project */}
               <div className="md:col-span-1">
                 <label className="text-xs text-astro-blue uppercase font-bold mb-1 block">
                   Customer Name *
@@ -395,7 +387,6 @@ const Customers = () => {
                 />
               </div>
 
-              {/* Financials */}
               <div className="md:col-span-1">
                 <label className="text-xs text-green-500 uppercase font-bold mb-1 block">
                   Total Amount (LKR) *
@@ -425,7 +416,20 @@ const Customers = () => {
                 />
               </div>
 
-              {/* Domain & Date */}
+              {/* --- NEW: VISUAL FEEDBACK FOR DUE AMOUNT --- */}
+              <div className="md:col-span-2 bg-gray-800 p-4 rounded-xl flex justify-between items-center border border-gray-700">
+                <span className="text-gray-400 text-sm">
+                  Estimated Due Amount:
+                </span>
+                <span
+                  className={`font-bold text-xl font-mono ${
+                    calculatedRemaining > 0 ? "text-red-400" : "text-green-400"
+                  }`}
+                >
+                  {formatCurrency(calculatedRemaining)}
+                </span>
+              </div>
+
               <div className="md:col-span-2">
                 <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">
                   Domain Name (Optional)
@@ -452,7 +456,6 @@ const Customers = () => {
                 />
               </div>
 
-              {/* Toggles */}
               <div className="md:col-span-1 flex flex-col justify-end gap-2">
                 <label className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-lg w-full cursor-pointer border border-gray-700 hover:border-green-500 transition-colors">
                   <input
@@ -470,8 +473,6 @@ const Customers = () => {
                     Payment Confirmed?
                   </span>
                 </label>
-
-                {/* NEW: Project Delivered Checkbox */}
                 <label className="flex items-center gap-3 bg-gray-800 px-4 py-2 rounded-lg w-full cursor-pointer border border-gray-700 hover:border-blue-500 transition-colors">
                   <input
                     type="checkbox"
@@ -490,7 +491,6 @@ const Customers = () => {
                 </label>
               </div>
 
-              {/* Description */}
               <div className="md:col-span-2">
                 <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">
                   Description
@@ -505,7 +505,6 @@ const Customers = () => {
                 ></textarea>
               </div>
 
-              {/* Buttons */}
               <div className="col-span-2 flex gap-3 mt-4">
                 <button
                   type="button"
@@ -526,7 +525,6 @@ const Customers = () => {
         </div>
       )}
 
-      {/* --- PAYMENT MANAGEMENT MODAL (Kept same) --- */}
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-full max-w-lg rounded-2xl border border-gray-700 flex flex-col max-h-[80vh]">

@@ -91,9 +91,13 @@ class Customer(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     advance_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0)
-    is_payment_confirmed = models.BooleanField(default=False)
 
-    # --- New Field Added Here ---
+    # --- NEW LINK: Connects this customer's advance to an Income ID ---
+    advance_income_record = models.OneToOneField(
+        Income, on_delete=models.SET_NULL, null=True, blank=True, related_name='customer_advance'
+    )
+
+    is_payment_confirmed = models.BooleanField(default=False)
     is_project_delivered = models.BooleanField(default=False)
 
     # Dates
@@ -104,13 +108,18 @@ class Customer(models.Model):
         return f"{self.name} - {self.project_name}"
 
 
-# --- NEW: Partial Payment Model ---
 class CustomerPayment(models.Model):
     customer = models.ForeignKey(
         Customer, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField(default=datetime.date.today)
     note = models.CharField(max_length=200, blank=True, null=True)
+
+    # --- NEW LINK: Connects this partial payment to an Income ID ---
+    income_record = models.OneToOneField(
+        Income, on_delete=models.SET_NULL, null=True, blank=True, related_name='customer_payment'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

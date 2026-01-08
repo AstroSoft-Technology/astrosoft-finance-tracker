@@ -100,7 +100,34 @@ class CustomerViewSet(viewsets.ModelViewSet):
         return Customer.objects.filter(user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        customer = serializer.save(user=self.request.user)
+
+        # 1. Create Income for Advance
+        if customer.advance_amount > 0:
+            income_entry = Income.objects.create(
+                user=self.request.user,
+                source=f"Project Advance: {customer.project_name}",
+                amount=customer.advance_amount,
+                date=datetime.date.today(),
+                description=f"Initial Advance Payment for {customer.name}"
+            )
+            # 2. LINK IT! Save the ID of the income to the customer
+            customer.advance_income_record = income_entry
+            customer.save()
+
+    def perform_destroy(self, instance):
+        # 1. Delete the Linked Income Record (Advance)
+        if instance.advance_income_record:
+            instance.advance_income_record.delete()
+
+        # 2. Delete the Linked Income Records (Partial Payments)
+        # Because we used on_delete=SET_NULL in models, we must manually delete them
+        for payment in instance.payments.all():
+            if payment.income_record:
+                payment.income_record.delete()
+
+        # 3. Finally, delete the customer
+        instance.delete()
 
 
 class CustomerPaymentViewSet(viewsets.ModelViewSet):
@@ -108,20 +135,31 @@ class CustomerPaymentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Only show payments for customers belonging to this user
         return CustomerPayment.objects.filter(customer__user=self.request.user).order_by('-date')
 
     def perform_create(self, serializer):
         payment = serializer.save()
 
-        # --- AUTO-MAGIC: Create an Income Record ---
-        Income.objects.create(
+        # 1. Create Income
+        income_entry = Income.objects.create(
             user=self.request.user,
-            source=f"Project: {payment.customer.project_name} ({payment.customer.name})",
+            source=f"Project Payment: {payment.customer.project_name}",
             amount=payment.amount,
             date=payment.date,
-            description=f"Partial Payment. Note: {payment.note}"
+            description=f"Partial Payment ({payment.note}) for {payment.customer.name}"
         )
+
+        # 2. LINK IT!
+        payment.income_record = income_entry
+        payment.save()
+
+    def perform_destroy(self, instance):
+        # 1. Delete the Linked Income Record
+        if instance.income_record:
+            instance.income_record.delete()
+
+        # 2. Delete the payment itself
+        instance.delete()
 
 # --- Dashboard Logic ---
 
