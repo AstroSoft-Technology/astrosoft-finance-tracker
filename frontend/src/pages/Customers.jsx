@@ -74,14 +74,19 @@ const Customers = () => {
     e.preventDefault();
 
     // --- FIX: Clean Data Before Sending ---
-    // If Advance Amount is empty, send 0. If Date is empty, send null.
+    // 1. If Advance Amount is empty, send "0".
+    // 2. If Date is empty, send null (Backend hates empty strings for dates).
+    // 3. Ensure Total Amount is treated as a number.
     const payload = {
       ...formData,
+      total_amount: Number(formData.total_amount),
       advance_amount:
         formData.advance_amount === "" ? "0" : formData.advance_amount,
       delivery_date:
         formData.delivery_date === "" ? null : formData.delivery_date,
     };
+
+    console.log("Submitting Payload:", payload); // Debug log
 
     try {
       await api.post("customers/", payload);
@@ -101,7 +106,15 @@ const Customers = () => {
       alert("Customer added successfully!");
     } catch (error) {
       console.error("Error adding customer", error);
-      alert("Failed to add customer. Check console for details.");
+
+      // --- ENHANCED ERROR REPORTING ---
+      // This will show exactly why the server rejected the data
+      if (error.response && error.response.data) {
+        const errorMsg = JSON.stringify(error.response.data, null, 2);
+        alert(`Server Rejected Data:\n${errorMsg}`);
+      } else {
+        alert("Failed to add customer. Check console for details.");
+      }
     }
   };
 
@@ -352,7 +365,6 @@ const Customers = () => {
                 />
               </div>
 
-              {/* --- UPDATED LABEL --- */}
               <div className="md:col-span-1">
                 <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">
                   Expected Project Delivery
