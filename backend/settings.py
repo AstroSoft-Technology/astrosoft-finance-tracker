@@ -138,6 +138,7 @@ STORAGES = {
 # --- CORS & CSRF CONFIGURATION (UPDATED) ---
 
 # Instead of allowing all, we list the specific domains we trust.
+# This is safer and prevents connection errors on custom domains.
 CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = [
@@ -148,11 +149,11 @@ CORS_ALLOWED_ORIGINS = [
     "https://web-production-6a19a.up.railway.app",  # Railway Backend
 ]
 
-# CSRF Trusted Origins (Crucial for POST requests)
+# CSRF Trusted Origins (Crucial for POST requests like "Add Income")
 CSRF_TRUSTED_ORIGINS = [
     'https://web-production-6a19a.up.railway.app',
     'https://astrosoft-finance-tracker.vercel.app',
-    'https://finance.astrosofttech.dev',            # YOUR NEW CUSTOM DOMAIN
+    'https://finance.astrosofttech.dev',            # <--- THIS WAS MISSING
 ]
 
 
