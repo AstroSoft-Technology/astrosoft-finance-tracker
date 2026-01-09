@@ -76,10 +76,10 @@ const Income = () => {
       </header>
 
       {/* RESPONSIVE: Stacks form above list on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Left Column: Input Form */}
-        <div className="bg-astro-card p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <div className="bg-astro-card p-4 md:p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
+          <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2">
             <Plus size={20} className="text-astro-light-blue" /> Add Income
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -161,10 +161,12 @@ const Income = () => {
         </div>
 
         {/* Right Column: List of Incomes */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3 md:space-y-4">
           <div className="flex justify-between items-end mb-2">
-            <h2 className="text-xl font-bold">Recent Transactions</h2>
-            <span className="text-astro-text-muted text-sm">
+            <h2 className="text-lg md:text-xl font-bold">
+              Recent Transactions
+            </h2>
+            <span className="text-astro-text-muted text-xs md:text-sm">
               {incomes.length} records
             </span>
           </div>
@@ -177,20 +179,24 @@ const Income = () => {
             incomes.map((income) => (
               <div
                 key={income.id}
-                className="group bg-astro-card p-4 md:p-5 rounded-2xl border border-gray-800 flex justify-between items-center hover:border-astro-light-blue/50 transition-all shadow-sm"
+                className="group bg-astro-card p-3 md:p-5 rounded-2xl border border-gray-800 flex flex-col sm:flex-row justify-between sm:items-center hover:border-astro-light-blue/50 transition-all shadow-sm gap-3 sm:gap-0"
               >
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className="p-3 bg-astro-dark rounded-full border border-gray-800 text-green-500 shrink-0">
-                    <DollarSign size={20} />
+                <div className="flex items-center gap-2 md:gap-4 overflow-hidden flex-1 min-w-0">
+                  <div className="p-2 md:p-3 bg-astro-dark rounded-full border border-gray-800 text-green-500 shrink-0">
+                    <DollarSign size={18} className="md:w-[20px] md:h-[20px]" />
                   </div>
-                  <div className="overflow-hidden">
-                    <h3 className="font-bold text-white text-base md:text-lg truncate">
+                  <div className="overflow-hidden flex-1 min-w-0">
+                    <h3 className="font-bold text-white text-sm md:text-base lg:text-lg truncate">
                       {income.source}
                     </h3>
-                    <p className="text-xs md:text-sm text-astro-text-muted flex items-center gap-2">
-                      <Calendar size={12} /> {income.date}
+                    <p className="text-[10px] md:text-xs lg:text-sm text-astro-text-muted flex items-center gap-1 md:gap-2">
+                      <Calendar
+                        size={10}
+                        className="md:w-[12px] md:h-[12px] shrink-0"
+                      />{" "}
+                      {income.date}
                       {income.description && (
-                        <span className="text-gray-600 truncate max-w-25 md:max-w-xs">
+                        <span className="text-gray-600 truncate">
                           • {income.description}
                         </span>
                       )}
@@ -198,15 +204,15 @@ const Income = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 md:gap-6">
-                  <span className="text-base md:text-xl font-bold text-green-400 whitespace-nowrap">
+                <div className="flex items-center justify-between sm:justify-end gap-2 md:gap-6">
+                  <span className="text-sm md:text-base lg:text-xl font-bold text-green-400 whitespace-nowrap">
                     + {formatCurrency(income.amount)}
                   </span>
                   <button
                     onClick={() => handleDelete(income.id)}
                     className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
                   </button>
                 </div>
               </div>

@@ -43,13 +43,13 @@ const DashboardCharts = ({ monthlyData, categoryData }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       {/* --- BAR CHART (Income vs Expenses) --- */}
-      <div className="bg-astro-card p-6 rounded-2xl border border-gray-800 shadow-lg">
-        <h3 className="text-white font-bold mb-6">
+      <div className="bg-astro-card p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg">
+        <h3 className="text-white font-bold mb-4 md:mb-6 text-sm md:text-base">
           Financial Overview (Last 6 Months)
         </h3>
-        <div className="h-64 w-full">
+        <div className="h-56 md:h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={monthlyData}
@@ -64,14 +64,16 @@ const DashboardCharts = ({ monthlyData, categoryData }) => {
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                tick={{ fill: "#9CA3AF", fontSize: 10 }}
                 dy={10}
+                interval="preserveStartEnd"
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                tick={{ fill: "#9CA3AF", fontSize: 10 }}
                 tickFormatter={(value) => `${value / 1000}k`}
+                width={35}
               />
               <Tooltip
                 cursor={{ fill: "rgba(255,255,255,0.05)" }}
@@ -102,9 +104,11 @@ const DashboardCharts = ({ monthlyData, categoryData }) => {
       </div>
 
       {/* --- PIE CHART (Expense Breakdown) --- */}
-      <div className="bg-astro-card p-6 rounded-2xl border border-gray-800 shadow-lg">
-        <h3 className="text-white font-bold mb-6">Expense Breakdown</h3>
-        <div className="h-64 w-full relative">
+      <div className="bg-astro-card p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg">
+        <h3 className="text-white font-bold mb-4 md:mb-6 text-sm md:text-base">
+          Expense Breakdown
+        </h3>
+        <div className="h-56 md:h-64 w-full relative">
           {categoryData.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
               No expense data available
@@ -116,8 +120,8 @@ const DashboardCharts = ({ monthlyData, categoryData }) => {
                   data={categoryData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60} // Makes it a Donut Chart
-                  outerRadius={80}
+                  innerRadius={45} // Smaller for mobile
+                  outerRadius={70}
                   paddingAngle={5}
                   dataKey="total" // The value (number)
                   nameKey="category" // The label (e.g., "Salary", "Food")
@@ -132,12 +136,13 @@ const DashboardCharts = ({ monthlyData, categoryData }) => {
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
-                  verticalAlign="middle"
-                  align="right"
-                  layout="vertical"
+                  verticalAlign="bottom"
+                  align="center"
+                  layout="horizontal"
                   iconType="circle"
+                  wrapperStyle={{ fontSize: "10px" }}
                   formatter={(value) => (
-                    <span className="text-gray-300 text-xs ml-2">{value}</span>
+                    <span className="text-gray-300 text-xs ml-1">{value}</span>
                   )}
                 />
               </PieChart>

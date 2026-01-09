@@ -115,10 +115,10 @@ const Liabilities = () => {
       </header>
 
       {/* RESPONSIVE: Stacks vertically on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Left Column: Input Form */}
-        <div className="bg-astro-card p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-orange-500">
+        <div className="bg-astro-card p-4 md:p-6 rounded-2xl shadow-lg shadow-black/20 border border-gray-800 h-fit">
+          <h2 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2 text-orange-500">
             <Plus size={20} /> Add Liability
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -187,10 +187,10 @@ const Liabilities = () => {
         </div>
 
         {/* Right Column: List of Liabilities */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3 md:space-y-4">
           <div className="flex justify-between items-end mb-2">
-            <h2 className="text-xl font-bold">Active Debts</h2>
-            <span className="text-astro-text-muted text-sm">
+            <h2 className="text-lg md:text-xl font-bold">Active Debts</h2>
+            <span className="text-astro-text-muted text-xs md:text-sm">
               {liabilities.length} records
             </span>
           </div>
@@ -207,41 +207,50 @@ const Liabilities = () => {
               return (
                 <div
                   key={item.id}
-                  className={`group bg-astro-card p-6 rounded-2xl border ${
+                  className={`group bg-astro-card p-4 md:p-6 rounded-2xl border ${
                     isFullyPaid ? "border-green-500/30" : "border-gray-800"
                   } hover:border-orange-500/50 transition-all shadow-sm relative overflow-hidden`}
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-3 md:mb-4 gap-3 sm:gap-0">
+                    <div className="flex items-center gap-3 md:gap-4">
                       <div
-                        className={`p-3 rounded-full border border-gray-800 ${
+                        className={`p-2 md:p-3 rounded-full border border-gray-800 shrink-0 ${
                           isFullyPaid
                             ? "bg-green-500/10 text-green-500"
                             : "bg-astro-dark text-orange-500"
                         }`}
                       >
                         {isFullyPaid ? (
-                          <CheckCircle2 size={24} />
+                          <CheckCircle2
+                            size={20}
+                            className="md:w-[24px] md:h-[24px]"
+                          />
                         ) : (
-                          <Landmark size={24} />
+                          <Landmark
+                            size={20}
+                            className="md:w-[24px] md:h-[24px]"
+                          />
                         )}
                       </div>
                       <div>
-                        <h3 className="font-bold text-white text-lg">
+                        <h3 className="font-bold text-white text-base md:text-lg">
                           {item.title}
                         </h3>
-                        <p className="text-sm text-astro-text-muted flex items-center gap-2">
-                          <AlertCircle size={12} /> Due:{" "}
-                          {item.due_date || "No date set"}
+                        <p className="text-xs md:text-sm text-astro-text-muted flex items-center gap-1 md:gap-2">
+                          <AlertCircle
+                            size={10}
+                            className="md:w-[12px] md:h-[12px]"
+                          />{" "}
+                          Due: {item.due_date || "No date set"}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-astro-text-muted uppercase">
+                    <div className="text-left sm:text-right">
+                      <p className="text-[10px] md:text-xs text-astro-text-muted uppercase">
                         Remaining
                       </p>
                       <span
-                        className={`text-xl font-bold ${
+                        className={`text-lg md:text-xl font-bold ${
                           isFullyPaid ? "text-green-500" : "text-white"
                         }`}
                       >
@@ -252,20 +261,20 @@ const Liabilities = () => {
                     </div>
                   </div>
 
-                  <div className="mb-2 flex justify-between text-xs text-astro-text-muted">
+                  <div className="mb-2 flex justify-between text-[10px] md:text-xs text-astro-text-muted">
                     <span>Paid: {formatCurrency(item.paid_amount)}</span>
                     <span>Total: {formatCurrency(item.total_amount)}</span>
                   </div>
-                  <div className="w-full bg-gray-800 rounded-full h-2.5 mb-4">
+                  <div className="w-full bg-gray-800 rounded-full h-2 md:h-2.5 mb-3 md:mb-4">
                     <div
-                      className={`h-2.5 rounded-full transition-all duration-500 ${
+                      className={`h-2 md:h-2.5 rounded-full transition-all duration-500 ${
                         isFullyPaid ? "bg-green-500" : "bg-orange-500"
                       }`}
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>
 
-                  <div className="flex justify-end pt-2 border-t border-gray-800/50 gap-3">
+                  <div className="flex flex-col sm:flex-row justify-end pt-2 border-t border-gray-800/50 gap-2 md:gap-3">
                     {!isFullyPaid && (
                       <button
                         onClick={() => openPayModal(item)}

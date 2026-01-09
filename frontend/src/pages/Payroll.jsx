@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { Users, Plus, DollarSign, Trash2, CheckCircle, X } from "lucide-react";
+import {
+  Users,
+  Plus,
+  DollarSign,
+  Trash2,
+  CheckCircle,
+  X,
+  Pencil,
+} from "lucide-react";
 
 // --- Payment History Modal ---
 const PaymentHistoryModal = ({ employee, onClose }) => {
@@ -109,11 +117,14 @@ const Payroll = () => {
   const [activeTab, setActiveTab] = useState("team");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showAddEmp, setShowAddEmp] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [newEmp, setNewEmp] = useState({
     name: "",
     role: "",
     base_salary: "0",
     email: "",
+    status: "Active",
   });
   const [showPayModal, setShowPayModal] = useState(false);
   const [payData, setPayData] = useState({
@@ -141,13 +152,40 @@ const Payroll = () => {
   const handleAddEmployee = async (e) => {
     e.preventDefault();
     try {
-      await api.post("employees/", { ...newEmp, base_salary: "0" });
+      if (isEditMode) {
+        await api.put(`employees/${editId}/`, newEmp);
+        alert("Employee updated successfully!");
+      } else {
+        await api.post("employees/", newEmp);
+      }
       setShowAddEmp(false);
-      setNewEmp({ name: "", role: "", base_salary: "0", email: "" });
+      setIsEditMode(false);
+      setEditId(null);
+      setNewEmp({
+        name: "",
+        role: "",
+        base_salary: "0",
+        email: "",
+        status: "Active",
+      });
       fetchData();
     } catch (err) {
-      alert("Error adding employee");
+      alert("Error saving employee");
     }
+  };
+
+  const handleEditEmployee = (emp, e) => {
+    e.stopPropagation();
+    setIsEditMode(true);
+    setEditId(emp.id);
+    setNewEmp({
+      name: emp.name,
+      role: emp.role,
+      base_salary: emp.base_salary || "0",
+      email: emp.email || "",
+      status: emp.status || "Active",
+    });
+    setShowAddEmp(true);
   };
 
   const handleProcessPay = async (e) => {
@@ -230,51 +268,98 @@ const Payroll = () => {
 
       {/* TEAM TAB */}
       {activeTab === "team" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <button
-            onClick={() => setShowAddEmp(true)}
-            className="border-2 border-dashed border-gray-700 rounded-2xl p-6 flex flex-col items-center justify-center text-astro-text-muted hover:border-astro-blue hover:text-astro-blue transition-all h-64"
+            onClick={() => {
+              setIsEditMode(false);
+              setEditId(null);
+              setNewEmp({
+                name: "",
+                role: "",
+                base_salary: "0",
+                email: "",
+                status: "Active",
+              });
+              setShowAddEmp(true);
+            }}
+            className="border-2 border-dashed border-gray-700 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center text-astro-text-muted hover:border-astro-blue hover:text-astro-blue transition-all h-56 md:h-64"
           >
-            <div className="p-4 bg-gray-800 rounded-full mb-4 group-hover:bg-astro-blue/10">
-              <Plus size={32} />
+            <div className="p-3 md:p-4 bg-gray-800 rounded-full mb-3 md:mb-4 group-hover:bg-astro-blue/10">
+              <Plus size={28} className="md:w-[32px] md:h-[32px]" />
             </div>
-            <span className="font-bold">Add New Employee</span>
+            <span className="font-bold text-sm md:text-base">
+              Add New Employee
+            </span>
           </button>
 
           {employees.map((emp) => (
             <div
               key={emp.id}
-              onClick={() => setSelectedEmployee(emp)}
-              className="bg-astro-card p-6 rounded-2xl border border-gray-800 shadow-lg relative group h-64 flex flex-col justify-between cursor-pointer hover:border-astro-blue hover:shadow-astro-blue/10 transition-all"
+              className="bg-astro-card p-4 md:p-6 rounded-2xl border border-gray-800 shadow-lg relative group h-56 md:h-64 flex flex-col justify-between hover:border-astro-blue hover:shadow-astro-blue/10 transition-all"
             >
               <div>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-astro-dark rounded-xl text-astro-blue border border-gray-800 group-hover:bg-astro-blue group-hover:text-white transition-colors">
-                    <Users size={24} />
+                <div className="flex items-start justify-between mb-3 md:mb-4">
+                  <div className="p-2 md:p-3 bg-astro-dark rounded-xl text-astro-blue border border-gray-800 group-hover:bg-astro-blue group-hover:text-white transition-colors">
+                    <Users size={20} className="md:w-[24px] md:h-[24px]" />
                   </div>
-                  <button
-                    onClick={(e) => handleDeleteEmployee(emp.id, e)}
-                    className="text-gray-600 hover:text-red-500 transition-colors p-2 hover:bg-gray-800 rounded-lg"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex gap-1.5 md:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => handleEditEmployee(emp, e)}
+                      className="text-gray-600 hover:text-blue-400 transition-colors p-1.5 md:p-2 hover:bg-gray-800 rounded-lg"
+                    >
+                      <Pencil size={14} className="md:w-[16px] md:h-[16px]" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteEmployee(emp.id, e)}
+                      className="text-gray-600 hover:text-red-500 transition-colors p-1.5 md:p-2 hover:bg-gray-800 rounded-lg"
+                    >
+                      <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-white group-hover:text-astro-blue transition-colors">
+                <h3 className="text-lg md:text-xl font-bold text-white group-hover:text-astro-blue transition-colors">
                   {emp.name}
                 </h3>
-                <p className="text-astro-text-muted text-sm">{emp.role}</p>
+                <p className="text-astro-text-muted text-xs md:text-sm">
+                  {emp.role}
+                </p>
               </div>
-              <div className="pt-4 border-t border-gray-800 flex justify-between items-center">
+              <div className="pt-3 md:pt-4 border-t border-gray-800 flex justify-between items-center">
                 <div>
-                  <p className="text-xs text-astro-text-muted">Status</p>
-                  <p className="text-green-400 font-medium text-sm flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>{" "}
-                    Active
+                  <p className="text-[10px] md:text-xs text-astro-text-muted">
+                    Status
+                  </p>
+                  <p
+                    className={`font-medium text-xs md:text-sm flex items-center gap-2 ${
+                      emp.status === "Active"
+                        ? "text-green-400"
+                        : emp.status === "On Leave"
+                        ? "text-yellow-400"
+                        : emp.status === "Inactive"
+                        ? "text-gray-400"
+                        : "text-green-400"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
+                        emp.status === "Active"
+                          ? "bg-green-500"
+                          : emp.status === "On Leave"
+                          ? "bg-yellow-500"
+                          : emp.status === "Inactive"
+                          ? "bg-gray-500"
+                          : "bg-green-500"
+                      }`}
+                    ></span>{" "}
+                    {emp.status || "Active"}
                   </p>
                 </div>
-                <span className="text-xs text-astro-blue font-medium bg-astro-blue/10 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  View History →
-                </span>
+                <button
+                  onClick={() => setSelectedEmployee(emp)}
+                  className="text-xs text-astro-blue font-medium bg-astro-blue/10 px-2 md:px-3 py-1 rounded-full hover:bg-astro-blue hover:text-white transition-all"
+                >
+                  View Payments →
+                </button>
               </div>
             </div>
           ))}
@@ -284,45 +369,52 @@ const Payroll = () => {
       {/* HISTORY TAB */}
       {activeTab === "history" && (
         // RESPONSIVE: overflow-x-auto for table scrolling
-        <div className="bg-astro-card rounded-2xl border border-gray-800 overflow-hidden overflow-x-auto">
-          <table className="w-full text-left min-w-150">
-            <thead className="bg-astro-dark text-astro-text-muted text-xs uppercase">
-              <tr>
-                <th className="p-4">Date</th>
-                <th className="p-4">Employee</th>
-                <th className="p-4">Payment Title</th>
-                <th className="p-4 text-right">Amount Paid</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {payments.map((pay) => (
-                <tr
-                  key={pay.id}
-                  className="hover:bg-gray-800/50 transition-colors"
-                >
-                  <td className="p-4 flex items-center gap-2">
-                    <CheckCircle size={14} className="text-green-500" />{" "}
-                    {pay.payment_date}
-                  </td>
-                  <td className="p-4 font-medium text-white">
-                    {pay.employee_name || "Employee"}
-                    <span className="block text-xs text-astro-text-muted">
-                      {pay.employee_role}
-                    </span>
-                  </td>
-                  <td className="p-4">{pay.title || "-"}</td>
-                  <td className="p-4 text-right font-bold text-white">
-                    {formatCurrency(pay.amount)}
-                  </td>
+        <div className="bg-astro-card rounded-2xl border border-gray-800 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[600px]">
+              <thead className="bg-astro-dark text-astro-text-muted text-[10px] md:text-xs uppercase">
+                <tr>
+                  <th className="p-3 md:p-4">Date</th>
+                  <th className="p-3 md:p-4">Employee</th>
+                  <th className="p-3 md:p-4">Payment Title</th>
+                  <th className="p-3 md:p-4 text-right">Amount Paid</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {payments.length === 0 && (
-            <div className="p-8 text-center text-astro-text-muted">
-              No salary payments recorded yet.
-            </div>
-          )}
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {payments.map((pay) => (
+                  <tr
+                    key={pay.id}
+                    className="hover:bg-gray-800/50 transition-colors"
+                  >
+                    <td className="p-3 md:p-4 flex items-center gap-2 text-xs md:text-sm">
+                      <CheckCircle
+                        size={12}
+                        className="md:w-[14px] md:h-[14px] text-green-500 shrink-0"
+                      />{" "}
+                      {pay.payment_date}
+                    </td>
+                    <td className="p-3 md:p-4 font-medium text-white text-xs md:text-sm">
+                      {pay.employee_name || "Employee"}
+                      <span className="block text-[10px] md:text-xs text-astro-text-muted">
+                        {pay.employee_role}
+                      </span>
+                    </td>
+                    <td className="p-3 md:p-4 text-xs md:text-sm">
+                      {pay.title || "-"}
+                    </td>
+                    <td className="p-3 md:p-4 text-right font-bold text-white text-xs md:text-sm">
+                      {formatCurrency(pay.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {payments.length === 0 && (
+              <div className="p-6 md:p-8 text-center text-astro-text-muted text-xs md:text-sm">
+                No salary payments recorded yet.
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -330,7 +422,9 @@ const Payroll = () => {
       {showAddEmp && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-astro-card w-[95%] md:w-full max-w-md rounded-2xl border border-gray-700 p-6">
-            <h3 className="text-xl font-bold mb-4">Add Team Member</h3>
+            <h3 className="text-xl font-bold mb-4">
+              {isEditMode ? "Edit Team Member" : "Add Team Member"}
+            </h3>
             <form onSubmit={handleAddEmployee} className="space-y-4">
               <div>
                 <label className="text-sm text-astro-text-muted mb-1 block">
@@ -360,10 +454,38 @@ const Payroll = () => {
                   }
                 />
               </div>
+              <div>
+                <label className="text-sm text-astro-text-muted mb-1 block">
+                  Status
+                </label>
+                <select
+                  required
+                  className="w-full bg-astro-dark border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-astro-blue focus:outline-none"
+                  value={newEmp.status}
+                  onChange={(e) =>
+                    setNewEmp({ ...newEmp, status: e.target.value })
+                  }
+                >
+                  <option value="Active">Active</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
               <div className="flex gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowAddEmp(false)}
+                  onClick={() => {
+                    setShowAddEmp(false);
+                    setIsEditMode(false);
+                    setEditId(null);
+                    setNewEmp({
+                      name: "",
+                      role: "",
+                      base_salary: "0",
+                      email: "",
+                      status: "Active",
+                    });
+                  }}
                   className="flex-1 py-3 rounded-xl border border-gray-700 text-gray-300 hover:bg-gray-800"
                 >
                   Cancel
@@ -372,7 +494,7 @@ const Payroll = () => {
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-astro-blue text-white font-bold hover:bg-blue-600 transition-colors"
                 >
-                  Add Member
+                  {isEditMode ? "Update Member" : "Add Member"}
                 </button>
               </div>
             </form>

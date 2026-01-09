@@ -113,9 +113,9 @@ const Dashboard = () => {
 
       {/* --- Main Content Split --- */}
       {/* RESPONSIVE: Stack vertically on mobile, side-by-side on large screens */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Left: Charts Area */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <DashboardCharts
             monthlyData={stats.monthly_stats}
             categoryData={stats.category_stats}
@@ -123,14 +123,14 @@ const Dashboard = () => {
         </div>
 
         {/* Right: Recent Transactions List */}
-        <div className="bg-astro-card p-6 rounded-2xl shadow-lg border border-gray-800 h-fit">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-white text-lg">
+        <div className="bg-astro-card p-4 md:p-6 rounded-2xl shadow-lg border border-gray-800 h-fit">
+          <div className="flex justify-between items-center mb-4 md:mb-6">
+            <h3 className="font-bold text-white text-base md:text-lg">
               Recent Transactions
             </h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {stats.recent_transactions.length === 0 ? (
               <p className="text-center text-gray-500 py-4 text-sm">
                 No recent activity.
@@ -139,36 +139,46 @@ const Dashboard = () => {
               stats.recent_transactions.map((t, index) => (
                 <div
                   key={`${t.type}-${t.id}-${index}`}
-                  className="flex items-center justify-between group"
+                  className="flex items-center justify-between group gap-2"
                 >
-                  <div className="flex items-center gap-3 md:gap-4">
+                  <div className="flex items-center gap-2 md:gap-4 overflow-hidden flex-1 min-w-0">
                     {/* Icon based on type */}
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-2 rounded-lg shrink-0 ${
                         t.type === "income"
                           ? "bg-blue-500/10 text-astro-light-blue"
                           : "bg-red-500/10 text-red-500"
                       }`}
                     >
                       {t.type === "income" ? (
-                        <ArrowDownLeft size={18} />
+                        <ArrowDownLeft
+                          size={16}
+                          className="md:w-[18px] md:h-[18px]"
+                        />
                       ) : (
-                        <ArrowUpRight size={18} />
+                        <ArrowUpRight
+                          size={16}
+                          className="md:w-[18px] md:h-[18px]"
+                        />
                       )}
                     </div>
 
-                    <div className="max-w-30 md:max-w-xs overflow-hidden">
-                      <p className="font-medium text-white text-sm truncate">
+                    <div className="overflow-hidden flex-1 min-w-0">
+                      <p className="font-medium text-white text-xs md:text-sm truncate">
                         {t.title}
                       </p>
-                      <p className="text-xs text-astro-text-muted flex items-center gap-1">
-                        <Calendar size={10} /> {t.date}
+                      <p className="text-[10px] md:text-xs text-astro-text-muted flex items-center gap-1">
+                        <Calendar
+                          size={8}
+                          className="md:w-[10px] md:h-[10px]"
+                        />{" "}
+                        {t.date}
                       </p>
                     </div>
                   </div>
 
                   <span
-                    className={`font-bold text-sm whitespace-nowrap ${
+                    className={`font-bold text-xs md:text-sm whitespace-nowrap shrink-0 ${
                       t.type === "income"
                         ? "text-astro-light-blue"
                         : "text-red-500"
