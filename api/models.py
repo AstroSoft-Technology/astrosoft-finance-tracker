@@ -59,12 +59,20 @@ class Liability(models.Model):
 
 
 class Employee(models.Model):
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('On Leave', 'On Leave'),
+        ('Inactive', 'Inactive'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255)
     base_salary = models.DecimalField(max_digits=12, decimal_places=2)
     email = models.EmailField(blank=True, null=True)
     joined_date = models.DateField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='Active')
 
     def __str__(self):
         return self.name
